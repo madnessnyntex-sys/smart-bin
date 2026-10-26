@@ -42,7 +42,7 @@ x-api-key: dev-bin-key-change-me
 servo, `OUT_OF_STOCK` means it's recyclable but the hopper is empty. Items the camera model
 labels with something unknown are saved as "Unrecognized" and rejected, so the data isn't lost.
 
-## API
+API
 
 | Method | Route | Auth | What it does |
 |---|---|---|---|
@@ -55,7 +55,7 @@ labels with something unknown are saved as "Unrecognized" and rejected, so the d
 | POST | /api/devices/:id/refill | `Authorization: Bearer ADMIN_TOKEN` | Add rice to a hopper |
 | POST | /api/dev/simulate | none, off in production | Demo helper |
 
-## Design notes
+Design notes
 
 - Detection + rice deduction happen in one transaction with the device row locked, so the hopper can't go negative.
 - The reward rule lives in `backend/src/rewards.js` as a pure function, and it's tested.
