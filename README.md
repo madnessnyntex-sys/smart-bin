@@ -1,11 +1,11 @@
-# Smart Trash Bin with Rice Vendo
+ Smart Trash Bin with Rice Vendo
 
 Rice in exchange for recyclable trash. Midterm requirement #1 (initial prototype).
 
 - `frontend/`: Next.js 14 + Tailwind CSS dashboard
 - `backend/`: Node.js + Express + MySQL API
 
-## Run it
+Run it
 
 1. Database. Either use Docker (`docker compose up -d` from this folder), or open MySQL Workbench and run `backend/schema.sql`.
 2. Backend
@@ -25,7 +25,7 @@ Rice in exchange for recyclable trash. Midterm requirement #1 (initial prototype
 
 Tests: `cd backend && npm test` (no database needed).
 
-## How the bin talks to the backend
+How the bin talks to the backend
 
 Each bin has an API key. It sends it in the `x-api-key` header, and only a hash is stored in MySQL.
 The dev key from the seed data is `dev-bin-key-change-me`.
