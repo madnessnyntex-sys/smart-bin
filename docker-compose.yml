@@ -1,0 +1,13 @@
+# MySQL for local dev. Runs backend/schema.sql the first time it starts.
+services:
+  db:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: smart_bin
+    ports: ["3306:3306"]
+    volumes:
+      - ./backend/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+      - dbdata:/var/lib/mysql
+volumes:
+  dbdata:
