@@ -9,8 +9,9 @@ const { notFound, errorHandler } = require('./middleware');
 function createApp() {
   const app = express();
   app.disable('x-powered-by');
+  if (config.trustProxy) app.set('trust proxy', config.trustProxy);
   app.use(helmet());
-  app.use(cors({ origin: config.corsOrigin }));
+  app.use(cors({ origin: config.corsOrigins }));
   app.use(express.json({ limit: '10kb' }));
   app.use('/api', rateLimit({ windowMs: 60_000, limit: 300, standardHeaders: true, legacyHeaders: false }), routes);
   app.use(notFound);

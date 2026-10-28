@@ -69,6 +69,56 @@ labels with something unknown are saved as "Unrecognized" and rejected, so the d
 
 A "login token" is sent as `Authorization: Bearer <token>`. It comes from register/login and lasts 8 hours.
 
+## Deploying on Vercel
+
+The website and the API are two separate Vercel projects made from this one GitHub repo, plus a MySQL database
+hosted somewhere else (Vercel doesn't host MySQL). The Arduino and the bridge stay on your computer and talk to the deployed API.
+
+**1. Hosted MySQL.** Create a MySQL 8 database with any provider that allows connections from the internet
+(for example Aiven, TiDB Cloud or Railway; check what their free plans include). Note its host, port, user, password and database name.
+Then create the tables from your computer (PowerShell shown; `BIN_API_KEY` is a new long random secret for the bin, keep it):
+
+```
+cd backend
+$env:DB_HOST="..."; $env:DB_PORT="..."; $env:DB_USER="..."; $env:DB_PASSWORD="..."; $env:DB_NAME="..."
+$env:DB_SSL="true"; $env:BIN_API_KEY="<long random secret>"
+npm run db:init
+```
+
+It refuses to run against a remote database without `BIN_API_KEY`, because otherwise the bin would keep the public dev key.
+
+**2. API project.** On Vercel: Add New > Project > import this repo > set **Root Directory** to `backend`. Add these Environment Variables:
+
+| Name | Value |
+|---|---|
+| `NODE_ENV` | `production` |
+| `JWT_SECRET` | 32+ random characters (the API won't start without it) |
+| `REGISTER_CODE` | the invite code for new dashboard accounts |
+| `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` | from your database provider |
+| `DB_SSL` | `true` |
+| `CORS_ORIGIN` | the website's address, set in step 4 |
+| `ADMIN_TOKEN` | optional, only for scripts that call the refill endpoint |
+
+Deploy, then open `https://<your-api>.vercel.app/api/health`. You should see `{"status":"ok"}`.
+
+**3. Website project.** Add New > Project > same repo > **Root Directory** `frontend` (Vercel detects Next.js). Environment Variables:
+`NEXT_PUBLIC_API_URL` = the API's address from step 2 (no slash at the end), and `NEXT_PUBLIC_ENABLE_SIMULATOR` = `false`. Deploy.
+
+**4. Let the website call the API.** In the API project set `CORS_ORIGIN` to the website's address
+(several can be listed with commas) and redeploy the API. Variables only take effect on the next deploy.
+`NEXT_PUBLIC_API_URL` is baked in when the website is built, so redeploy the website too if you change it.
+
+**5. Use it.** Open the website, create an account with your `REGISTER_CODE`. For the bin, set `API_URL` in `bridge/.env` to the API's address
+and `DEVICE_API_KEY` to your `BIN_API_KEY`.
+
+Things to know:
+- **No simulator online.** `/api/dev/simulate` is switched off in production. To demo without the bin, send a detection yourself:
+  `curl -X POST <api>/api/device/detections -H "x-api-key: <BIN_API_KEY>" -H "Content-Type: application/json" -d '{"item":"Soda can"}'`.
+- **Rate limits are weaker.** The limits are counted in memory, and Vercel can run several copies of the API at once, each with its own count.
+  The "10 failed logins per 15 minutes" limit is therefore not reliable online. Use a strong password.
+- **Every website address needs permission.** Vercel gives each preview deployment its own address. Only addresses listed in `CORS_ORIGIN` can use the API.
+- **First request after a quiet spell is slower**, because Vercel starts the API from scratch.
+
 ## Design notes
 
 - Detection + rice deduction happen in one transaction with the device row locked, so the hopper can't go negative.
@@ -82,5 +132,6 @@ A "login token" is sent as `Authorization: Bearer <token>`. It comes from regist
 ## Not done yet
 
 - No migration tool, just `schema.sql`.
+- The Vercel setup is prepared and tested locally, but it hasn't been deployed to Vercel yet.
 - The sketch and the bridge haven't been run on the real hardware yet. The bridge is tested against a fake backend and a scratch database.
 - The camera model isn't connected. `bridge/classify.js` is the empty spot for it, and until then you pick the item in the terminal.

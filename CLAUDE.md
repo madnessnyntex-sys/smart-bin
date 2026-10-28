@@ -30,6 +30,7 @@ Backend (from `backend/`):
 - `npm test`: runs all tests; it uses Node's built-in `node --test` runner and needs no database
 - `node --test test/rewards.test.js`: runs a single test file
 - `node --test --test-name-pattern="refill" test/api.test.js`: runs tests matching a name
+- `npm run db:init`: creates the tables in an existing database (for a hosted MySQL). It runs `schema.sql` minus its `CREATE DATABASE`/`USE` lines, and refuses a non-local `DB_HOST` unless `BIN_API_KEY` is set (it replaces the public dev bin key)
 
 Frontend (from `frontend/`): `npm install`, `npm run dev` (:3000), `npm run build`, `npm start`. There is no lint or test setup. The API base URL comes from `NEXT_PUBLIC_API_URL` and defaults to `http://localhost:4000`.
 
@@ -63,6 +64,12 @@ The token is kept in localStorage by `app/lib/auth.js`. The `Dashboard` componen
 ## Testing notes
 
 `test/api.test.js` only covers paths that resolve before any DB query (auth rejections, validation, 404, bad JSON). Dashboard routes need a login, so tests build a token with `signToken` from `auth.js`. Anything that touches MySQL has no automated test, so test DB-backed changes manually against the Docker DB, for example with `/api/dev/simulate`. Login and register are rate limited to 10 failed tries per 15 minutes per IP, so keep the number of failing auth requests in tests low.
+
+## Deployment (Vercel)
+
+Two Vercel projects from this repo: Root Directory `frontend` (Next.js, auto-detected) and `backend`. Steps are in the README. On Vercel the API is a serverless function: `backend/api/index.js` exports `createApp()` and `backend/vercel.json` rewrites every URL to it, so Express still sees the full `/api/...` path. `src/server.js` (`listen`) is only for running locally. MySQL is hosted elsewhere.
+
+`config.js` adapts to Vercel: `VERCEL` (set by Vercel) turns on `trust proxy` (the rate limiter needs the visitor's real IP) and lowers the DB pool to 3. `CORS_ORIGIN` may be a comma-separated list. `DB_SSL=true` (optional `DB_SSL_CA`) enables TLS to the database. Production refuses to start without a 32+ character `JWT_SECRET`, and `/dev/simulate` is not registered, so the frontend needs `NEXT_PUBLIC_ENABLE_SIMULATOR=false`. `NEXT_PUBLIC_*` values are baked in at build time. The rate limiters are in memory, so on serverless they are per copy and only approximate. Not yet deployed to a real Vercel account; the setup was only tested locally.
 
 ## Gotchas
 
