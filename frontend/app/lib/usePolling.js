@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+// Calls fn now and every `ms`, keeps the last good data if a refresh fails.
 export function usePolling(fn, deps = [], ms = 5000) {
   const [state, setState] = useState({ data: null, error: null });
   const fnRef = useRef(fn);

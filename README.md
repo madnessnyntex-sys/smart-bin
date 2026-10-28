@@ -1,4 +1,4 @@
- Smart Trash Bin with Rice Vendo
+# Smart Trash Bin with Rice Vendo
 
 Rice in exchange for recyclable trash. Midterm requirement #1 (initial prototype).
 
@@ -7,7 +7,7 @@ Rice in exchange for recyclable trash. Midterm requirement #1 (initial prototype
 - `arduino/`: Arduino Uno sketch (ultrasonic sensor, sorting flap, rice gate). See `arduino/README.md` for wiring
 - `bridge/`: Node script that passes messages between the Arduino (USB serial) and the backend. See `bridge/README.md`
 
-Run it
+## Run it
 
 1. Database. Either use Docker (`docker compose up -d` from this folder), or open MySQL Workbench and run `backend/schema.sql`.
 2. Backend
@@ -32,7 +32,7 @@ Run it
 
 Tests: `cd backend && npm test` and `cd bridge && npm test` (no database or hardware needed).
 
-How the bin talks to the backend
+## How the bin talks to the backend
 
 Each bin has an API key. It sends it in the `x-api-key` header, and only a hash is stored in MySQL.
 The dev key from the seed data is `dev-bin-key-change-me`.
@@ -49,7 +49,7 @@ x-api-key: dev-bin-key-change-me
 servo, `OUT_OF_STOCK` means it's recyclable but the hopper is empty. Items the camera model
 labels with something unknown are saved as "Unrecognized" and rejected, so the data isn't lost.
 
-API
+## API
 
 | Method | Route | Auth | What it does |
 |---|---|---|---|
@@ -69,7 +69,7 @@ API
 
 A "login token" is sent as `Authorization: Bearer <token>`. It comes from register/login and lasts 8 hours.
 
-Design notes
+## Design notes
 
 - Detection + rice deduction happen in one transaction with the device row locked, so the hopper can't go negative.
 - The reward rule lives in `backend/src/rewards.js` as a pure function, and it's tested.
