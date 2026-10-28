@@ -95,7 +95,7 @@ function DashboardContent({ email, onLogout }) {
           </div>
           <div className="grid gap-8 md:grid-cols-2">
             {SHOW_SIMULATOR && <SimulatePanel onDone={refresh} />}
-            <RecentList recent={data.recent} />
+            <RecentList recent={data.recent} onDone={refresh} />
           </div>
         </div>
       )}

@@ -56,6 +56,8 @@ labels with something unknown are saved as "Unrecognized" and rejected, so the d
 | GET | /api/auth/me | login token | Which user the token belongs to |
 | GET | /api/summary?days=7 | login token | Totals, counts per item, items per day |
 | GET | /api/detections/recent | login token | Last 10 detections |
+| PATCH | /api/detections/:id | login token | Fix a wrong detection: body `{ "item": "Soda can" }`. The old rice goes back and the new item is judged again |
+| DELETE | /api/detections/:id | login token | Delete a wrong detection and put its rice back into the hopper count |
 | GET | /api/devices | login token | Bins, rice left, online/offline |
 | GET | /api/waste-types | login token | Items and rice reward each |
 | POST | /api/devices/:id/refill | login token or `ADMIN_TOKEN` | Add rice to a hopper (never above its capacity). The dashboard's "Refill rice" button uses this |
@@ -69,6 +71,7 @@ A "login token" is sent as `Authorization: Bearer <token>`. It comes from regist
 - The reward rule lives in `backend/src/rewards.js` as a pure function, and it's tested.
 - Request bodies and query strings are validated with zod. Errors come back as JSON with the same shape.
 - helmet, rate limiting, CORS locked to the frontend origin, request size limit.
+- Editing or deleting a detection only corrects the records and the hopper count. Rice that already came out of the bin can't come back. Rice given back never pushes the count above the hopper's capacity.
 - Dashboard passwords are stored only as bcrypt hashes. Login tokens are JWTs signed with `JWT_SECRET`. Login and register allow 10 failed tries per 15 minutes.
 - The browser keeps the token in localStorage. A script injected into the page could read it (XSS), which is fine for a prototype. An httpOnly cookie would be safer.
 

@@ -8,4 +8,18 @@ function decideAction({ recyclable, rewardGrams, stockGrams }) {
   return { action: ACTIONS.DISPENSE, riceGrams: rewardGrams };
 }
 
-module.exports = { ACTIONS, decideAction };
+// Puts rice back into the hopper count, but never above what the hopper can hold.
+function giveBackRice({ stockGrams, capacityGrams, riceGrams }) {
+  return Math.min(capacityGrams, stockGrams + riceGrams);
+}
+
+// Used when a detection was saved with the wrong item. First the rice that record used goes
+// back into the count, then the new item is judged exactly like a fresh detection
+// (so the same decideAction rule applies). Returns what the record and the hopper should become.
+function correctDetection({ oldRiceGrams, recyclable, rewardGrams, stockGrams, capacityGrams }) {
+  const available = giveBackRice({ stockGrams, capacityGrams, riceGrams: oldRiceGrams });
+  const { action, riceGrams } = decideAction({ recyclable, rewardGrams, stockGrams: available });
+  return { action, riceGrams, stockGrams: available - riceGrams };
+}
+
+module.exports = { ACTIONS, decideAction, giveBackRice, correctDetection };

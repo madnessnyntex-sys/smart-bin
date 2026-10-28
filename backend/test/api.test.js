@@ -36,6 +36,22 @@ test('dashboard routes need a login', async () => {
   assert.equal((await post('/dev/simulate', { item: 'Soda can' })).status, 401);
 });
 
+const patch = (path, body, headers = {}) =>
+  fetch(base + path, { method: 'PATCH', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(body) });
+const del = (path, headers = {}) => fetch(base + path, { method: 'DELETE', headers });
+
+test('editing or deleting a detection needs a login', async () => {
+  assert.equal((await patch('/detections/1', { item: 'Soda can' })).status, 401);
+  assert.equal((await del('/detections/1')).status, 401);
+});
+
+test('edit and delete refuse a bad id or body before touching the database', async () => {
+  assert.equal((await patch('/detections/abc', { item: 'Soda can' }, loggedIn)).status, 400);
+  assert.equal((await patch('/detections/1', { item: '' }, loggedIn)).status, 400);
+  assert.equal((await del('/detections/0', loggedIn)).status, 400);
+  assert.equal((await del('/detections/-4', loggedIn)).status, 400);
+});
+
 test('a forged or garbage token is refused', async () => {
   const bad = { Authorization: 'Bearer not.a.token' };
   assert.equal((await fetch(base + '/summary', { headers: bad })).status, 401);

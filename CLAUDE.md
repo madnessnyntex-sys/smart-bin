@@ -48,6 +48,8 @@ Frontend (from `frontend/`): `npm install`, `npm run dev` (:3000), `npm run buil
 3. It calls the pure `decideAction()` in `rewards.js`, which returns `DISPENSE`, `REJECT` or `OUT_OF_STOCK` plus the grams of rice.
 4. It inserts a `detections` row and decrements `devices.rice_stock_grams`.
 
+`PATCH` and `DELETE /detections/:id` fix wrong records. Both go through `lockDetection()`, which locks the device row before the detection row (same order as `recordDetection`, to avoid deadlocks). The stock math lives in `rewards.js` (`giveBackRice`, `correctDetection`), and an edit re-runs `decideAction` for the new item. Hard delete, no history is kept.
+
 The `action` string in the response is the contract with the hardware, so the firmware only has to follow it. Change reward logic only in `rewards.js`, which is pure and unit-tested.
 
 `POST /api/dev/simulate` reuses `recordDetection` with a fake confidence so the dashboard can be demoed without hardware. It is only registered when `NODE_ENV !== 'production'`. The device "online" status is derived in SQL: `last_seen_at` within the last 2 minutes.

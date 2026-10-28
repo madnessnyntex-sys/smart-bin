@@ -10,7 +10,13 @@ const simulateBody = z.object({
   deviceId: z.number().int().positive().optional(),
 });
 
-const rangeQuery = z.object({
+// editing a detection only changes which item it was
+const updateDetectionBody = z.object({ item: z.string().trim().min(1).max(60) });
+
+// ids in the URL arrive as text. Whole numbers from 1 up only.
+const idParam = z.coerce.number().int().positive();
+
+const rangeQuery =z.object({
   days: z.coerce.number().int().min(1).max(365).default(7),
   deviceId: z.coerce.number().int().positive().optional(),
 });
@@ -28,4 +34,6 @@ const registerBody = z.object({ email, password, inviteCode: z.string().min(1).m
 // login doesn't re-check password rules, it only has to be a non-empty string
 const loginBody = z.object({ email, password: z.string().min(1).max(200) });
 
-module.exports = { detectionBody, simulateBody, rangeQuery, refillBody, registerBody, loginBody };
+module.exports = {
+  detectionBody, simulateBody, updateDetectionBody, idParam, rangeQuery, refillBody, registerBody, loginBody,
+};
