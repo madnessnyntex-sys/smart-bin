@@ -17,4 +17,15 @@ const rangeQuery = z.object({
 
 const refillBody = z.object({ grams: z.number().int().positive().max(100000) });
 
-module.exports = { detectionBody, simulateBody, rangeQuery, refillBody };
+const email = z.string().trim().toLowerCase().email().max(100);
+
+// bcrypt only looks at the first 72 bytes of a password, so longer ones are refused
+// instead of being silently cut short.
+const password = z.string().min(8).refine((p) => Buffer.byteLength(p) <= 72, 'Password is too long (72 bytes max)');
+
+const registerBody = z.object({ email, password, inviteCode: z.string().min(1).max(100) });
+
+// login doesn't re-check password rules, it only has to be a non-empty string
+const loginBody = z.object({ email, password: z.string().min(1).max(200) });
+
+module.exports = { detectionBody, simulateBody, rangeQuery, refillBody, registerBody, loginBody };

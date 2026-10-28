@@ -15,13 +15,16 @@ Rice in exchange for recyclable trash. Midterm requirement #1 (initial prototype
    npm install
    npm run dev
    ```
+   In `.env`, set `JWT_SECRET` (long and random) and `REGISTER_CODE` (the invite code people need to create a dashboard account).
+   Already have the database from before? Run `backend/schema.sql` again. It only adds the new `users` table.
 3. Frontend (second terminal)
    ```
    cd frontend
    npm install
    npm run dev
    ```
-4. Open http://localhost:3000. "Drop item in bin" fakes a detection so you can demo without hardware.
+4. Open http://localhost:3000. You'll land on the login page. Click "I have an invite code" and create an account with your `REGISTER_CODE`.
+   "Drop item in bin" fakes a detection so you can demo without hardware.
 
 Tests: `cd backend && npm test` (no database needed).
 
@@ -48,12 +51,17 @@ labels with something unknown are saved as "Unrecognized" and rejected, so the d
 |---|---|---|---|
 | POST | /api/device/detections | device key | Log a detection, take rice out of the hopper |
 | POST | /api/device/heartbeat | device key | Marks the bin online |
-| GET | /api/summary?days=7 | none | Totals, counts per item, items per day |
-| GET | /api/detections/recent | none | Last 10 detections |
-| GET | /api/devices | none | Bins, rice left, online/offline |
-| GET | /api/waste-types | none | Items and rice reward each |
+| POST | /api/auth/register | invite code in the body | Create a dashboard account, returns a login token |
+| POST | /api/auth/login | none | Log in, returns a login token |
+| GET | /api/auth/me | login token | Which user the token belongs to |
+| GET | /api/summary?days=7 | login token | Totals, counts per item, items per day |
+| GET | /api/detections/recent | login token | Last 10 detections |
+| GET | /api/devices | login token | Bins, rice left, online/offline |
+| GET | /api/waste-types | login token | Items and rice reward each |
 | POST | /api/devices/:id/refill | `Authorization: Bearer ADMIN_TOKEN` | Add rice to a hopper |
-| POST | /api/dev/simulate | none, off in production | Demo helper |
+| POST | /api/dev/simulate | login token, off in production | Demo helper |
+
+A "login token" is sent as `Authorization: Bearer <token>`. It comes from register/login and lasts 8 hours.
 
 ## Design notes
 
@@ -61,9 +69,10 @@ labels with something unknown are saved as "Unrecognized" and rejected, so the d
 - The reward rule lives in `backend/src/rewards.js` as a pure function, and it's tested.
 - Request bodies and query strings are validated with zod. Errors come back as JSON with the same shape.
 - helmet, rate limiting, CORS locked to the frontend origin, request size limit.
+- Dashboard passwords are stored only as bcrypt hashes. Login tokens are JWTs signed with `JWT_SECRET`. Login and register allow 10 failed tries per 15 minutes.
+- The browser keeps the token in localStorage. A script injected into the page could read it (XSS), which is fine for a prototype. An httpOnly cookie would be safer.
 
 ## Not done yet
 
-- The dashboard has no login. Fine for a prototype, add auth before putting it online.
 - No migration tool, just `schema.sql`.
 - The camera model / Arduino code isn't part of this requirement.

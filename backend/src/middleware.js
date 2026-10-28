@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const { ZodError } = require('zod');
 const config = require('./config');
 const { pool, explainDbError } = require('./db');
+const { verifyToken } = require('./auth');
 
 class HttpError extends Error {
   constructor(status, message) {
@@ -32,7 +33,17 @@ const adminAuth = (req, res, next) => {
   next();
 };
 
-const notFound = (req, res) => res.status(404).json({ error: 'Not found' });
+// dashboard users send "Authorization: Bearer <login token>". Only the token is checked,
+// so this needs no database call.
+const userAuth = (req, res, next) => {
+  const token = (req.get('authorization') || '').replace(/^Bearer /, '');
+  const user = token && verifyToken(token);
+  if (!user) return next(new HttpError(401, 'Login required'));
+  req.user = user;
+  next();
+};
+
+const notFound =(req, res) => res.status(404).json({ error: 'Not found' });
 
 // eslint-disable-next-line no-unused-vars
 const errorHandler = (err, req, res, next) => {
@@ -53,4 +64,4 @@ const errorHandler = (err, req, res, next) => {
   res.status(500).json({ error: 'Something went wrong on our side' });
 };
 
-module.exports = { HttpError, asyncHandler, deviceAuth, adminAuth, notFound, errorHandler };
+module.exports = { HttpError, asyncHandler, deviceAuth, adminAuth, userAuth, notFound, errorHandler };

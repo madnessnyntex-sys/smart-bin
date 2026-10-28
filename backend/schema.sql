@@ -35,6 +35,14 @@ CREATE TABLE IF NOT EXISTS detections (
   INDEX idx_detections_device_created (device_id, created_at)
 );
 
+-- people who can log in to the dashboard. only the bcrypt hash of the password is kept.
+CREATE TABLE IF NOT EXISTS users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  email VARCHAR(100) NOT NULL UNIQUE,
+  password_hash VARCHAR(100) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 INSERT IGNORE INTO waste_types (name, category, is_recyclable, rice_grams) VALUES
   ('Water bottle', 'Plastic', 1, 20),
   ('Soda can', 'Metal', 1, 25),

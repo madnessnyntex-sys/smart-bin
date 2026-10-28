@@ -1,11 +1,23 @@
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const config = require('./config');
 const { pool, withTransaction } = require('./db');
-const { HttpError, asyncHandler, deviceAuth, adminAuth } = require('./middleware');
-const { detectionBody, simulateBody, rangeQuery, refillBody } = require('./schemas');
+const { HttpError, asyncHandler, deviceAuth, adminAuth, userAuth } = require('./middleware');
+const { detectionBody, simulateBody, rangeQuery, refillBody, registerBody, loginBody } = require('./schemas');
 const { decideAction } = require('./rewards');
+const { hashPassword, verifyPassword, DUMMY_HASH, signToken, sameSecret } = require('./auth');
 
 const router = express.Router();
+
+// stops people guessing passwords or invite codes: 10 failed tries per 15 minutes per address
+const authLimiter = rateLimit({
+  windowMs: 15 * 60_000,
+  limit: 10,
+  skipSuccessfulRequests: true,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many attempts. Try again in 15 minutes.' },
+});
 const FALLBACK_ITEM = 'Unrecognized';
 
 // Logs a detection and takes the rice out of the hopper in one transaction.
@@ -55,13 +67,45 @@ router.post('/device/heartbeat', deviceAuth, asyncHandler(async (req, res) => {
   res.json({ ok: true });
 }));
 
-// ---- dashboard reads ----
-router.get('/waste-types', asyncHandler(async (req, res) => {
+// ---- dashboard login (no token needed, that's how you get one) ----
+// Creating an account needs the invite code from REGISTER_CODE in .env.
+router.post('/auth/register', authLimiter, asyncHandler(async (req, res) => {
+  const { email, password, inviteCode } = registerBody.parse(req.body);
+  if (!config.registerCode) throw new HttpError(403, 'Registration is turned off');
+  if (!sameSecret(inviteCode, config.registerCode)) throw new HttpError(403, 'Wrong invite code');
+
+  let result;
+  try {
+    [result] = await pool.query(
+      'INSERT INTO users (email, password_hash) VALUES (?, ?)', [email, await hashPassword(password)]);
+  } catch (err) {
+    if (err.code === 'ER_DUP_ENTRY') throw new HttpError(409, 'That email is already registered');
+    throw err;
+  }
+  const user = { id: result.insertId, email };
+  res.status(201).json({ token: signToken(user), user: { email } });
+}));
+
+router.post('/auth/login', authLimiter, asyncHandler(async (req, res) => {
+  const { email, password } = loginBody.parse(req.body);
+  const [rows] = await pool.query('SELECT id, email, password_hash FROM users WHERE email = ?', [email]);
+  const user = rows[0];
+  // always run one password check, even for an unknown email, and give one message for both cases
+  const ok = await verifyPassword(password, user ? user.password_hash : DUMMY_HASH);
+  if (!user || !ok) throw new HttpError(401, 'Invalid email or password');
+  res.json({ token: signToken(user), user: { email: user.email } });
+}));
+
+// lets the dashboard check that its saved token still works
+router.get('/auth/me', userAuth, (req, res) => res.json({ email: req.user.email }));
+
+// ---- dashboard reads (need a logged-in user) ----
+router.get('/waste-types', userAuth, asyncHandler(async (req, res) => {
   const [rows] = await pool.query('SELECT * FROM waste_types ORDER BY name');
   res.json(rows);
 }));
 
-router.get('/devices', asyncHandler(async (req, res) => {
+router.get('/devices', userAuth, asyncHandler(async (req, res) => {
   const [rows] = await pool.query(`
     SELECT id, name, location, rice_stock_grams, rice_capacity_grams, last_seen_at,
            (last_seen_at IS NOT NULL AND last_seen_at > NOW() - INTERVAL 2 MINUTE) AS online
@@ -69,7 +113,7 @@ router.get('/devices', asyncHandler(async (req, res) => {
   res.json(rows.map((r) => ({ ...r, online: !!r.online })));
 }));
 
-router.get('/detections/recent', asyncHandler(async (req, res) => {
+router.get('/detections/recent', userAuth, asyncHandler(async (req, res) => {
   const [rows] = await pool.query(`
     SELECT d.id, w.name, w.category, w.is_recyclable, d.confidence, d.rice_grams, d.created_at, dev.name AS device
     FROM detections d
@@ -79,7 +123,7 @@ router.get('/detections/recent', asyncHandler(async (req, res) => {
   res.json(rows);
 }));
 
-router.get('/summary', asyncHandler(async (req, res) => {
+router.get('/summary', userAuth, asyncHandler(async (req, res) => {
   const q = rangeQuery.parse(req.query);
   const where = ['d.created_at >= NOW() - INTERVAL ? DAY'];
   const params = [q.days];
@@ -118,7 +162,7 @@ router.post('/devices/:id/refill', adminAuth, asyncHandler(async (req, res) => {
 
 // ---- dev only: fakes what the bin would send so the dashboard can be demoed without hardware ----
 if (config.env !== 'production') {
-  router.post('/dev/simulate', asyncHandler(async (req, res) => {
+  router.post('/dev/simulate', userAuth, asyncHandler(async (req, res) => {
     const { item, deviceId } = simulateBody.parse(req.body);
     let id = deviceId;
     if (!id) {
