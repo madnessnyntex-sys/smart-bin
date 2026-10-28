@@ -58,7 +58,7 @@ labels with something unknown are saved as "Unrecognized" and rejected, so the d
 | GET | /api/detections/recent | login token | Last 10 detections |
 | GET | /api/devices | login token | Bins, rice left, online/offline |
 | GET | /api/waste-types | login token | Items and rice reward each |
-| POST | /api/devices/:id/refill | `Authorization: Bearer ADMIN_TOKEN` | Add rice to a hopper |
+| POST | /api/devices/:id/refill | login token or `ADMIN_TOKEN` | Add rice to a hopper (never above its capacity). The dashboard's "Refill rice" button uses this |
 | POST | /api/dev/simulate | login token, off in production | Demo helper |
 
 A "login token" is sent as `Authorization: Bearer <token>`. It comes from register/login and lasts 8 hours.

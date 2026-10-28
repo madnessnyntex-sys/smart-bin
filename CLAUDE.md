@@ -39,7 +39,7 @@ Frontend (from `frontend/`): `npm install`, `npm run dev` (:3000), `npm run buil
 
 **Three kinds of caller, three kinds of auth** (all in `middleware.js`):
 - Device (the bin/Arduino): `deviceAuth` checks the `x-api-key` header against a hash stored in `devices`. The raw key is never stored. The seed key is `dev-bin-key-change-me`.
-- Admin: `adminAuth` checks `Authorization: Bearer ADMIN_TOKEN`. It guards only `POST /devices/:id/refill`.
+- Admin: `adminAuth` checks `Authorization: Bearer ADMIN_TOKEN`. `POST /devices/:id/refill` uses `userOrAdminAuth`, which accepts either that token or a dashboard login token, because the browser can't hold `ADMIN_TOKEN` safely.
 - Dashboard user: `userAuth` checks `Authorization: Bearer <JWT>` and guards every dashboard GET plus `/dev/simulate`. It only verifies the token's signature and expiry, with no DB lookup. Tokens come from `POST /auth/login` or `/auth/register`, last 8h and are signed with `JWT_SECRET`. Registration needs `REGISTER_CODE` (empty means registration is off). Password and token helpers are pure and live in `auth.js` (bcryptjs, jsonwebtoken). `config.js` refuses to start in production without a strong `JWT_SECRET`.
 
 **Detection pipeline (`recordDetection` in `routes.js`).** This is the core of the app. It runs in one transaction via `withTransaction` from `db.js`:
@@ -54,7 +54,7 @@ The `action` string in the response is the contract with the hardware, so the fi
 
 **Errors.** Throw `HttpError(status, msg)` or let zod throw (schemas are in `schemas.js`). Wrap handlers in `asyncHandler`. `errorHandler` turns all of these into JSON, with zod issues in `details`. Malformed JSON gives 400, not 500. Tests assert this shape.
 
-**Frontend.** `app/page.js` is a client dashboard made of components in `app/components/` (Stats, Hoppers, DailyChart, TopItems, RecentList, SimulatePanel). `page.js` polls summary, recent detections and devices every 5s through `app/lib/usePolling.js`, and `SimulatePanel` posts to `/api/dev/simulate`. All fetches go through the `api()` helper in `app/lib/api.js`. It sets `cache: 'no-store'`, attaches the saved login token, and turns network failures into a readable error. On a 401 it clears the token and sends the browser to `/login`; pass `{ auth: false }` for the login/register calls. API paths passed to `api()` include the `/api` prefix.
+**Frontend.** `app/page.js` is a client dashboard made of components in `app/components/` (Stats, Hoppers, RefillControl, DailyChart, TopItems, RecentList, SimulatePanel). `page.js` polls summary, recent detections and devices every 5s through `app/lib/usePolling.js`, and `SimulatePanel` posts to `/api/dev/simulate`. All fetches go through the `api()` helper in `app/lib/api.js`. It sets `cache: 'no-store'`, attaches the saved login token, and turns network failures into a readable error. On a 401 it clears the token and sends the browser to `/login`; pass `{ auth: false }` for the login/register calls. API paths passed to `api()` include the `/api` prefix.
 
 The token is kept in localStorage by `app/lib/auth.js`. The `Dashboard` component in `page.js` is a gate: it checks `/api/auth/me` before rendering `DashboardContent`, so nothing polls without a login. `app/login/page.js` handles both login and register. The frontend gate is only for convenience, since the backend enforces access.
 

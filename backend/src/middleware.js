@@ -43,7 +43,12 @@ const userAuth = (req, res, next) => {
   next();
 };
 
-const notFound =(req, res) => res.status(404).json({ error: 'Not found' });
+// Lets a request in if it has EITHER a valid dashboard login token OR the admin token.
+// The dashboard's refill button uses the login token; scripts can still use ADMIN_TOKEN.
+const userOrAdminAuth = (req, res, next) =>
+  userAuth(req, res, (notAUser) => (notAUser ? adminAuth(req, res, next) : next()));
+
+const notFound = (req, res) => res.status(404).json({ error: 'Not found' });
 
 // eslint-disable-next-line no-unused-vars
 const errorHandler = (err, req, res, next) => {
@@ -64,4 +69,4 @@ const errorHandler = (err, req, res, next) => {
   res.status(500).json({ error: 'Something went wrong on our side' });
 };
 
-module.exports = { HttpError, asyncHandler, deviceAuth, adminAuth, userAuth, notFound, errorHandler };
+module.exports = { HttpError, asyncHandler, deviceAuth, adminAuth, userAuth, userOrAdminAuth, notFound, errorHandler };

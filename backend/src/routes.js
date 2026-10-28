@@ -2,7 +2,7 @@ const express = require('express');
 const rateLimit = require('express-rate-limit');
 const config = require('./config');
 const { pool, withTransaction } = require('./db');
-const { HttpError, asyncHandler, deviceAuth, adminAuth, userAuth } = require('./middleware');
+const { HttpError, asyncHandler, deviceAuth, userAuth, userOrAdminAuth } = require('./middleware');
 const { detectionBody, simulateBody, rangeQuery, refillBody, registerBody, loginBody } = require('./schemas');
 const { decideAction } = require('./rewards');
 const { hashPassword, verifyPassword, DUMMY_HASH, signToken, sameSecret } = require('./auth');
@@ -148,8 +148,8 @@ router.get('/summary', userAuth, asyncHandler(async (req, res) => {
   });
 }));
 
-// ---- admin ----
-router.post('/devices/:id/refill', adminAuth, asyncHandler(async (req, res) => {
+// ---- refill (dashboard login token or ADMIN_TOKEN) ----
+router.post('/devices/:id/refill', userOrAdminAuth, asyncHandler(async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id) || id < 1) throw new HttpError(400, 'Invalid device id');
   const { grams } = refillBody.parse(req.body);

@@ -1,4 +1,7 @@
-export default function Hoppers({ devices }) {
+import RefillControl from './RefillControl';
+
+// onDone reloads the dashboard data after a refill
+export default function Hoppers({ devices, onDone }) {
   return (
     <section className="rounded-lg bg-white p-6">
       <h2 className="mb-4 text-xl font-semibold">Rice hoppers</h2>
@@ -17,6 +20,7 @@ export default function Hoppers({ devices }) {
             <p className={`text-sm ${low ? 'font-medium text-reject' : 'text-ink/60'}`}>
               {(d.rice_stock_grams / 1000).toFixed(2)} kg left{low && '. Refill soon.'}
             </p>
+            <RefillControl device={d} onDone={onDone} />
           </div>
         );
       })}

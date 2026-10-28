@@ -91,7 +91,7 @@ function DashboardContent({ email, onLogout }) {
           <TopItems byItem={data.summary.byItem} total={data.summary.totals.total} days={data.summary.days} />
           <div className="grid gap-8 md:grid-cols-2">
             <DailyChart daily={data.summary.daily} />
-            <Hoppers devices={data.devices} />
+            <Hoppers devices={data.devices} onDone={refresh} />
           </div>
           <div className="grid gap-8 md:grid-cols-2">
             {SHOW_SIMULATOR && <SimulatePanel onDone={refresh} />}
