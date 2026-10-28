@@ -41,7 +41,7 @@ for both). A 470-1000 uF capacitor across the servo supply, close to the servos,
 | Arduino to computer | `READY` | Started up |
 | | `DETECT` | An item has been in front of the sensor for 0.5 s |
 | | `DONE` | Finished dealing with the item |
-| | `TIMEOUT` | No answer came within 5 s (the item is pushed out, no rice) |
+| | `TIMEOUT` | No answer came within 15 s (the item is pushed out, no rice) |
 | Computer to Arduino | `DISPENSE,20` | Sort as recyclable and give 20 g of rice |
 | | `REJECT` | Push the item to the reject side, no rice |
 | | `OUT_OF_STOCK` | Recyclable, but the hopper is empty: sort it as recyclable, no rice |
@@ -54,8 +54,8 @@ The sketch gives at most `MAX_RICE_GRAMS` (100 g) per item, however big the numb
 
 1. Upload the sketch and open **Serial Monitor**. Set it to **9600 baud** and **Newline** at the end of each line.
 2. You should see `READY`. Hold your hand about 5-10 cm from the sensor for a second: `DETECT` appears and the LED stays on.
-3. Within 5 seconds type `DISPENSE,20` and press Enter. The flap tilts, the gate opens, then both return, and you see `DONE`.
-4. Try again and type `REJECT`, then `OUT_OF_STOCK`, then `ERROR`. Try again and type nothing: after 5 s you see `TIMEOUT`.
+3. Within 15 seconds type `DISPENSE,20` and press Enter. The flap tilts, the gate opens, then both return, and you see `DONE`.
+4. Try again and type `REJECT`, then `OUT_OF_STOCK`, then `ERROR`. Try again and type nothing: after 15 s you see `TIMEOUT`.
 5. Take your hand away for a second before the next try, the bin waits for it to be empty.
 
 Beeps: 1 long low = rejected. 2 short high = accepted. 3 medium = out of rice. 4 quick low = error or timeout.

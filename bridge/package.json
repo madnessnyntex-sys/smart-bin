@@ -1,0 +1,17 @@
+{
+  "name": "smart-bin-bridge",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Reads the Arduino's serial messages, asks the backend, and sends the answer back",
+  "main": "bridge.js",
+  "engines": {
+    "node": ">=20.6"
+  },
+  "scripts": {
+    "start": "node --env-file=.env bridge.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "serialport": "^13.0.0"
+  }
+}

@@ -5,6 +5,7 @@ Rice in exchange for recyclable trash. Midterm requirement #1 (initial prototype
 - `frontend/`: Next.js 14 + Tailwind CSS dashboard
 - `backend/`: Node.js + Express + MySQL API
 - `arduino/`: Arduino Uno sketch (ultrasonic sensor, sorting flap, rice gate). See `arduino/README.md` for wiring
+- `bridge/`: Node script that passes messages between the Arduino (USB serial) and the backend. See `bridge/README.md`
 
 ## Run it
 
@@ -27,7 +28,9 @@ Rice in exchange for recyclable trash. Midterm requirement #1 (initial prototype
 4. Open http://localhost:3000. You'll land on the login page. Click "I have an invite code" and create an account with your `REGISTER_CODE`.
    "Drop item in bin" fakes a detection so you can demo without hardware.
 
-Tests: `cd backend && npm test` (no database needed).
+5. With the hardware: upload the sketch from `arduino/`, then run the bridge (`bridge/README.md`).
+
+Tests: `cd backend && npm test` and `cd bridge && npm test` (no database or hardware needed).
 
 ## How the bin talks to the backend
 
@@ -79,5 +82,5 @@ A "login token" is sent as `Authorization: Bearer <token>`. It comes from regist
 ## Not done yet
 
 - No migration tool, just `schema.sql`.
-- The camera model isn't part of this requirement.
-- The Arduino sketch can't talk to the backend by itself yet. It needs the serial bridge program in between.
+- The sketch and the bridge haven't been run on the real hardware yet. The bridge is tested against a fake backend and a scratch database.
+- The camera model isn't connected. `bridge/classify.js` is the empty spot for it, and until then you pick the item in the terminal.

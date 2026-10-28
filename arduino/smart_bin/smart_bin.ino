@@ -12,7 +12,7 @@
 //   3. We do it, beep, flash the LED, and send "DONE".
 //
 // Safety rule: rice is ONLY given when the computer says DISPENSE. If no reply comes
-// within 5 seconds we treat it as an error and give nothing.
+// within 15 seconds we treat it as an error and give nothing.
 //
 // Serial settings: 9600 baud. Every message is one line that ends with a newline.
 // Lines we send: READY (after start-up), DETECT, DONE, TIMEOUT.
@@ -33,7 +33,9 @@ const unsigned int MIN_CM = 2;            // the sensor can't read closer than a
 const unsigned long SAMPLE_MS = 60;       // time between readings (the HC-SR04 needs about 60 ms)
 const unsigned long STABLE_MS = 500;      // the item must stay this long before we send DETECT
 const unsigned long CLEAR_MS = 1000;      // after a cycle the bin must be empty this long before the next one
-const unsigned long REPLY_TIMEOUT_MS = 5000;  // how long we wait for the computer's answer
+// How long we wait for the computer's answer. 15 s leaves time for a person to pick the item
+// from the terminal menu. Once a camera picks the item (instant), a shorter wait such as 5000 is fine.
+const unsigned long REPLY_TIMEOUT_MS = 15000;
 const bool PRINT_DISTANCE = false;        // set to true to print "DIST <cm>" lines while setting up the sensor
 
 // ---------- sorting flap (SG90), angles in degrees ----------
