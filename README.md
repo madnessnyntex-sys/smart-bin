@@ -4,6 +4,7 @@ Rice in exchange for recyclable trash. Midterm requirement #1 (initial prototype
 
 - `frontend/`: Next.js 14 + Tailwind CSS dashboard
 - `backend/`: Node.js + Express + MySQL API
+- `arduino/`: Arduino Uno sketch (ultrasonic sensor, sorting flap, rice gate). See `arduino/README.md` for wiring
 
 ## Run it
 
@@ -78,4 +79,5 @@ A "login token" is sent as `Authorization: Bearer <token>`. It comes from regist
 ## Not done yet
 
 - No migration tool, just `schema.sql`.
-- The camera model / Arduino code isn't part of this requirement.
+- The camera model isn't part of this requirement.
+- The Arduino sketch can't talk to the backend by itself yet. It needs the serial bridge program in between.

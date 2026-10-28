@@ -67,4 +67,5 @@ The token is kept in localStorage by `app/lib/auth.js`. The `Dashboard` componen
 ## Gotchas
 
 - There are no migrations. Schema changes mean editing `backend/schema.sql` and recreating the DB, because Docker only runs it on a fresh volume (`docker compose down -v`).
-- `backend/dev.mwb` (a MySQL Workbench model) is untracked, and the Arduino/camera code is not part of this repo.
+- `backend/dev.mwb` (a MySQL Workbench model) is untracked, and the camera model is not part of this repo.
+- `arduino/smart_bin/smart_bin.ino` is the firmware (Uno R3, pins in `arduino/README.md`). It talks to the computer with one-line serial messages (`DETECT` out; `DISPENSE,<grams>`, `REJECT`, `OUT_OF_STOCK`, `ERROR` in), which are documented in `arduino/README.md`. The first three replies are the backend's `action` values, and `DISPENSE` carries the grams. Rice is only dispensed on an explicit `DISPENSE,<grams>`, and a missing reply times out to "no rice". No Arduino toolchain is installed on the dev machine, so the sketch has not been compiled by Claude; the user verifies it in the Arduino IDE.
